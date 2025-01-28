@@ -228,4 +228,7 @@ window.onload = function () {
 
   // Sync quotes with the server
   syncQuotes();
+
+  // Set an interval to sync quotes with the server every 30 seconds
+  setInterval(syncQuotes, 30000); // 30,000 ms = 30 seconds
 };

@@ -19,6 +19,21 @@ async function fetchQuotesFromServer() {
   return data;
 }
 
+// Function to send a new quote to the server via POST request
+async function postQuoteToServer(newQuote) {
+  const response = await fetch(SERVER_URL, {
+    method: 'POST', // تحديد أن الطلب هو POST
+    headers: {
+      'Content-Type': 'application/json', // تحديد نوع المحتوى
+    },
+    body: JSON.stringify(newQuote), // تحويل الاقتباس الجديد إلى JSON
+  });
+
+  const data = await response.json();
+  console.log('Quote added to server:', data);
+  return data;
+}
+
 // Function to synchronize local data with the server
 async function syncWithServer() {
   const serverQuotes = await fetchQuotesFromServer();
@@ -113,18 +128,21 @@ function createAddQuoteForm() {
   document.getElementById('addQuoteButton').addEventListener('click', addQuote);
 }
 
-// Function to add a new quote to the array and update the DOM
-function addQuote() {
+// Function to add a new quote to the array, update the DOM, and sync with the server
+async function addQuote() {
   const newQuoteText = document.getElementById('newQuoteText').value;
   const newQuoteCategory = document.getElementById('newQuoteCategory').value;
 
   if (newQuoteText && newQuoteCategory) {
     // Add new quote to the quotes array
     const newQuote = { text: newQuoteText, category: newQuoteCategory };
-    quotes.push(newQuote);
 
-    // Save quotes to localStorage
+    // Save quote locally
+    quotes.push(newQuote);
     saveQuotes();
+
+    // Post the new quote to the server
+    const serverQuote = await postQuoteToServer(newQuote);
 
     // Update category dropdown if new category is added
     populateCategories();
@@ -132,9 +150,6 @@ function addQuote() {
     // Clear the input fields
     document.getElementById('newQuoteText').value = '';
     document.getElementById('newQuoteCategory').value = '';
-
-    // Optionally sync the new quote to the server
-    syncWithServer();
 
     alert('New quote added successfully!');
   } else {

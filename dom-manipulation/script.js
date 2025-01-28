@@ -35,27 +35,29 @@ async function postQuoteToServer(newQuote) {
 }
 
 // Function to synchronize local data with the server
-async function syncWithServer() {
+async function syncQuotes() {
+  // 1. جلب الاقتباسات من الخادم
   const serverQuotes = await fetchQuotesFromServer();
-
-  // Update local quotes with server data (if there's any conflict, prefer server data)
+  
+  // 2. تحديث الاقتباسات المحلية بناءً على بيانات الخادم
   serverQuotes.forEach(serverQuote => {
     const index = quotes.findIndex(localQuote => localQuote.id === serverQuote.id);
     if (index === -1) {
-      // If the quote doesn't exist locally, add it
+      // إذا لم يكن هناك اقتباس محلي مطابق، نضيفه
       quotes.push(serverQuote);
     } else {
-      // If the quote exists locally, resolve conflict and update
+      // إذا كان هناك اقتباس محلي مطابق، نحل التعارض بتفضيل بيانات الخادم
       quotes[index] = resolveConflict(quotes[index], serverQuote);
     }
   });
 
+  // 3. حفظ الاقتباسات المحدثة في localStorage
   saveQuotes();
 }
 
 // Function to resolve conflict between local and server quotes
 function resolveConflict(localQuote, serverQuote) {
-  // Prefer server data in case of conflict
+  // في حالة وجود تعارض، نفضل بيانات الخادم
   return serverQuote;
 }
 
@@ -223,4 +225,7 @@ window.onload = function () {
 
   // Populate categories in dropdown
   populateCategories();
+
+  // Sync quotes with the server
+  syncQuotes();
 };

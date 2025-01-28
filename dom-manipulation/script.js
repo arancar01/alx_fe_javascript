@@ -53,12 +53,37 @@ async function syncQuotes() {
 
   // 3. حفظ الاقتباسات المحدثة في localStorage
   saveQuotes();
+
+  // 4. عرض رسالة عند إتمام المزامنة بنجاح
+  displaySyncMessage();
 }
 
 // Function to resolve conflict between local and server quotes
 function resolveConflict(localQuote, serverQuote) {
   // في حالة وجود تعارض، نفضل بيانات الخادم
   return serverQuote;
+}
+
+// Function to display a sync message
+function displaySyncMessage() {
+  const message = document.createElement('div');
+  message.textContent = "Quotes synced with server!";
+  message.style.position = 'fixed';
+  message.style.top = '20px';
+  message.style.left = '50%';
+  message.style.transform = 'translateX(-50%)';
+  message.style.backgroundColor = 'green';
+  message.style.color = 'white';
+  message.style.padding = '10px';
+  message.style.borderRadius = '5px';
+  message.style.zIndex = '1000';
+
+  document.body.appendChild(message);
+
+  // Remove the message after 3 seconds
+  setTimeout(() => {
+    message.remove();
+  }, 3000);
 }
 
 // Function to display quotes based on a category filter

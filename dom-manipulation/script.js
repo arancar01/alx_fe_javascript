@@ -1,3 +1,4 @@
+const SERVER_URL = 'https://jsonplaceholder.typicode.com/posts'; // Replace with your actual API URL if available
 // script.js
 
 // Array to store quotes (loaded from localStorage if available)
@@ -7,71 +8,9 @@ let quotes = JSON.parse(localStorage.getItem('quotes')) || [
   { text: "Life is what happens when you're busy making other plans.", category: "Life" }
 ];
 
-// Server URL (replace with your actual API URL if needed)
-const SERVER_URL = 'https://jsonplaceholder.typicode.com/posts'; // Example mock API
-
 // Function to save quotes to localStorage
 function saveQuotes() {
   localStorage.setItem('quotes', JSON.stringify(quotes));
-}
-
-// Function to fetch quotes from the server and merge them with local data
-async function fetchQuotesFromServer() {
-  try {
-    const response = await fetch(SERVER_URL);
-    const serverQuotes = await response.json();
-
-    // Merge server quotes with local quotes
-    mergeQuotes(serverQuotes);
-
-    // Notify user of successful sync
-    notifyUser('Quotes successfully synced with the server!');
-  } catch (error) {
-    console.error('Error fetching quotes from server:', error);
-    notifyUser('Failed to sync with the server. Please try again later.');
-  }
-}
-
-// Function to sync local quotes to the server
-async function syncQuotesToServer() {
-  try {
-    const response = await fetch(SERVER_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(quotes)
-    });
-
-    if (response.ok) {
-      notifyUser('Local quotes successfully synced to the server!');
-    } else {
-      notifyUser('Failed to sync local quotes to the server.');
-    }
-  } catch (error) {
-    console.error('Error syncing quotes to server:', error);
-  }
-}
-
-// Function to merge server quotes with local quotes
-function mergeQuotes(serverQuotes) {
-  const mergedQuotes = [...quotes];
-
-  serverQuotes.forEach(serverQuote => {
-    if (!quotes.some(localQuote => localQuote.text === serverQuote.text)) {
-      mergedQuotes.push(serverQuote);
-    }
-  });
-
-  quotes = mergedQuotes;
-  saveQuotes();
-  populateCategories();
-  filterQuotes();
-}
-
-// Function to notify the user of actions
-function notifyUser(message) {
-  alert(message);
 }
 
 // Function to display quotes based on a category filter
@@ -155,9 +94,6 @@ function addQuote() {
     // Save quotes to localStorage
     saveQuotes();
 
-    // Sync quotes to the server
-    syncQuotesToServer();
-
     // Update category dropdown if new category is added
     populateCategories();
 
@@ -171,6 +107,34 @@ function addQuote() {
   }
 }
 
+// Function to export quotes as JSON file
+function exportToJsonFile() {
+  const dataStr = JSON.stringify(quotes, null, 2);
+  const blob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+
+  const downloadLink = document.createElement('a');
+  downloadLink.href = url;
+  downloadLink.download = 'quotes.json';
+  downloadLink.textContent = 'Export Quotes';
+  document.body.appendChild(downloadLink);
+
+  URL.revokeObjectURL(url);
+}
+
+// Function to import quotes from a JSON file
+function importFromJsonFile(event) {
+  const fileReader = new FileReader();
+  fileReader.onload = function(event) {
+    const importedQuotes = JSON.parse(event.target.result);
+    quotes.push(...importedQuotes);
+    saveQuotes();
+    populateCategories();
+    alert('Quotes imported successfully!');
+  };
+  fileReader.readAsText(event.target.files[0]);
+}
+
 // Attach event listeners and initialize application
 window.onload = function () {
   document.getElementById('newQuote').addEventListener('click', showRandomQuote);
@@ -182,11 +146,19 @@ window.onload = function () {
   categoryFilter.addEventListener('change', filterQuotes);
   document.body.insertBefore(categoryFilter, document.getElementById('quoteDisplay'));
 
-  // Add Sync with Server button
-  const syncButton = document.createElement('button');
-  syncButton.textContent = 'Sync with Server';
-  syncButton.addEventListener('click', fetchQuotesFromServer);
-  document.body.appendChild(syncButton);
+  // Create input for JSON import
+  const importInput = document.createElement('input');
+  importInput.type = 'file';
+  importInput.id = 'importFile';
+  importInput.accept = '.json';
+  importInput.addEventListener('change', importFromJsonFile);
+  document.body.appendChild(importInput);
+
+  // Add Export Quotes button to the DOM
+  const exportButton = document.createElement('button');
+  exportButton.textContent = 'Export Quotes';
+  exportButton.addEventListener('click', exportToJsonFile);
+  document.body.appendChild(exportButton);
 
   // Display last viewed quote from sessionStorage if available
   const lastViewedQuote = sessionStorage.getItem('lastViewedQuote');

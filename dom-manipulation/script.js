@@ -1,5 +1,4 @@
-const SERVER_URL = 'https://jsonplaceholder.typicode.com/posts'; // Replace with your actual API URL if available
-// script.js
+const SERVER_URL = 'https://jsonplaceholder.typicode.com/posts'; // استبدال هذا بالرابط الفعلي للخادم إذا كان متاحًا
 
 // Array to store quotes (loaded from localStorage if available)
 let quotes = JSON.parse(localStorage.getItem('quotes')) || [
@@ -11,6 +10,38 @@ let quotes = JSON.parse(localStorage.getItem('quotes')) || [
 // Function to save quotes to localStorage
 function saveQuotes() {
   localStorage.setItem('quotes', JSON.stringify(quotes));
+}
+
+// Function to fetch quotes from the server
+async function fetchQuotesFromServer() {
+  const response = await fetch(SERVER_URL);
+  const data = await response.json();
+  return data;
+}
+
+// Function to synchronize local data with the server
+async function syncWithServer() {
+  const serverQuotes = await fetchQuotesFromServer();
+
+  // Update local quotes with server data (if there's any conflict, prefer server data)
+  serverQuotes.forEach(serverQuote => {
+    const index = quotes.findIndex(localQuote => localQuote.id === serverQuote.id);
+    if (index === -1) {
+      // If the quote doesn't exist locally, add it
+      quotes.push(serverQuote);
+    } else {
+      // If the quote exists locally, resolve conflict and update
+      quotes[index] = resolveConflict(quotes[index], serverQuote);
+    }
+  });
+
+  saveQuotes();
+}
+
+// Function to resolve conflict between local and server quotes
+function resolveConflict(localQuote, serverQuote) {
+  // Prefer server data in case of conflict
+  return serverQuote;
 }
 
 // Function to display quotes based on a category filter
@@ -89,7 +120,8 @@ function addQuote() {
 
   if (newQuoteText && newQuoteCategory) {
     // Add new quote to the quotes array
-    quotes.push({ text: newQuoteText, category: newQuoteCategory });
+    const newQuote = { text: newQuoteText, category: newQuoteCategory };
+    quotes.push(newQuote);
 
     // Save quotes to localStorage
     saveQuotes();
@@ -100,6 +132,9 @@ function addQuote() {
     // Clear the input fields
     document.getElementById('newQuoteText').value = '';
     document.getElementById('newQuoteCategory').value = '';
+
+    // Optionally sync the new quote to the server
+    syncWithServer();
 
     alert('New quote added successfully!');
   } else {
